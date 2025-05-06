@@ -464,7 +464,7 @@ async function experimentInit() {
     name: 'iti_blank',
     text: '',
     font: 'Arial',
-    units: 'deg', 
+    units: 'norm',
     pos: [0, 0], draggable: false, height: 0.5,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
