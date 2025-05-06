@@ -350,6 +350,8 @@ async function experimentInit() {
 
   // Usage:
   subCond = generateSequence();
+  console.log(subCond);
+
   // Initialize components for Routine "block"
   blockClock = new util.Clock();
   text = new visual.TextStim({
