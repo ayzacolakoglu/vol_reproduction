@@ -10,7 +10,6 @@ const { Scheduler } = util;
 const { abs, sin, cos, PI: pi, sqrt } = Math;
 const { round } = util;
 let subCond;
-let participant;
 
 
 // store info about the experiment session:
