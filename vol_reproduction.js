@@ -399,45 +399,45 @@ async function experimentInit() {
   });
   fixation = new visual.ShapeStim ({
     win: psychoJS.window, name: 'fixation', units : 'height', 
-    vertices: 'cross', size:[(0.001 * x_scale), (0.001 * x_scale)],
-    ori: 0.0, 
-    pos: [0, 0], 
-    draggable: false, 
-    anchor: 'center', 
-    lineWidth: 1.0, 
-    lineColor: new util.Color('white'), 
-    fillColor: new util.Color('white'), 
-    colorSpace: 'rgb', 
-    opacity: undefined, 
-    depth: -2, 
-    interpolate: true, 
+    vertices: 'cross', size:[(0.0004 * x_scale), (0.0004 * x_scale)],
+    ori: 0.0,
+    pos: [0, 0],
+    draggable: false,
+    anchor: 'center',
+    lineWidth: 1.0,
+    lineColor: new util.Color('white'),
+    fillColor: new util.Color('white'),
+    colorSpace: 'rgb',
+    opacity: undefined,
+    depth: -2,
+    interpolate: true,
   });
-  
+
   // Initialize components for Routine "cue_to_reproduce"
   cue_to_reproduceClock = new util.Clock();
   rep_cue = new visual.Polygon({
-    win: psychoJS.window, name: 'rep_cue', units : 'height', 
-    edges: 100, size:[(0.0007 * x_scale), (0.0007 * x_scale)],
-    ori: 0.0, 
-    pos: [0, 0], 
-    draggable: false, 
-    anchor: 'center', 
-    lineWidth: 1.0, 
-    lineColor: new util.Color([0.1294, 0.8667, 0.1294]), 
-    fillColor: new util.Color([0.1294, 0.8667, 0.1294]), 
-    colorSpace: 'rgb', 
-    opacity: undefined, 
-    depth: 0, 
-    interpolate: true, 
+    win: psychoJS.window, name: 'rep_cue', units : 'height',
+    edges: 100, size:[(0.0004 * x_scale), (0.0004 * x_scale)],
+    ori: 0.0,
+    pos: [0, 0],
+    draggable: false,
+    anchor: 'center',
+    lineWidth: 1.0,
+    lineColor: new util.Color([0.1294, 0.8667, 0.1294]),
+    fillColor: new util.Color([0.1294, 0.8667, 0.1294]),
+    colorSpace: 'rgb',
+    opacity: undefined,
+    depth: 0,
+    interpolate: true,
   });
-  
+
   // Initialize components for Routine "Reproduction"
   ReproductionClock = new util.Clock();
   gabor = new visual.GratingStim({
     win : psychoJS.window,
-    name : 'gabor', units : 'norm', 
+    name : 'gabor', units : 'norm',
     tex : undefined, mask : 'gauss',
-    ori : 1.0, 
+    ori : 1.0,
     pos : [0, 0],
     draggable: false,
     anchor : 'center',
@@ -445,12 +445,12 @@ async function experimentInit() {
     size : [(0.007 * x_scale), (0.015 * y_scale)],
     color : new util.Color([1,1,1]), opacity : undefined,
     contrast : 0.4, blendmode : 'avg',
-    texRes : 128.0, interpolate : true, depth : 0.0 
+    texRes : 128.0, interpolate : true, depth : 0.0
   });
   // Run 'Begin Experiment' code from code_reproduction
   kb = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
-  
-  
+
+
   // Initialize components for Routine "feedback"
   feedbackClock = new util.Clock();
   feedback_text = new visual.TextStim({
@@ -458,13 +458,13 @@ async function experimentInit() {
     name: 'feedback_text',
     text: '',
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, 0], draggable: false, height: 0.1,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: 0.0 
+    depth: 0.0
   });
-  
+
   // Initialize components for Routine "iti"
   itiClock = new util.Clock();
   iti_blank = new visual.TextStim({
