@@ -2,6 +2,15 @@
  * Vol_Reproduction *
  *************************/
 
+import { core, data, sound, util, visual, hardware } from './lib/psychojs-2024.2.4.js';
+const { PsychoJS } = core;
+const { TrialHandler, MultiStairHandler } = data;
+const { Scheduler } = util;
+//some handy aliases as in the psychopy scripts;
+const { abs, sin, cos, PI: pi, sqrt } = Math;
+const { round } = util;
+var subCond
+
 
 // store info about the experiment session:
 let expName = 'vol_reproduction';  // from the Builder filename that created this script
@@ -138,10 +147,6 @@ var key_resp_keys;
 var InstructionClock;
 var text_inst;
 var instr_key;
-var w;
-var durations;
-var labels;
-var trialList;
 var blockClock;
 var text;
 var key_resp;
@@ -281,78 +286,68 @@ async function experimentInit() {
   instr_key = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
 
   // Run 'Begin Experiment' code from code
-  // JavaScript doesn't have numpy or pandas, so we use regular arrays and math
-  console.log("intruction begin");
-  let low = 600; // ms
-  let high = 1800; // ms
-  let step = 16.67; // ms for 60Hz
-  let n_trl = 3;
+  // In your PsychoJS code
+  function generateSequence(participantId) {
+      // Parameters
+      const low = 600; // ms
+      const high = 1800; // ms
+      const step = 16.67; // ms for 60Hz refresh rate
+      const n_trl = 3; // piloting phase
 
-  // Generate random walk
-  let w = [];
-  for (let i = 0; i < n_trl; i++) {
-      w.push((Math.random() * 2 - 1)); // simple random noise
-  }
-  // Cumulative sum
-  for (let i = 1; i < w.length; i++) {
-      w[i] += w[i - 1];
-  }
-  // Normalize
-  let mean = w.reduce((a, b) => a + b) / w.length;
-  let std = Math.sqrt(w.map(x => (x - mean) ** 2).reduce((a, b) => a + b) / w.length);
-  w = w.map(x => (x - mean) / std);
+      // Generate random walk
+      let w = new Array(n_trl).fill(0).map((_, i, arr) =>
+          arr.slice(0, i+1).reduce((a) => a + Math.random()*2-1, 0));
 
-  // Rescale to low-high range
-  let minVal = Math.min(...w);
-  let maxVal = Math.max(...w);
-  w = w.map(x => ((x - minVal) / (maxVal - minVal)) * (high - low) + low);
+      // Normalization
+      const mean = w.reduce((a, b) => a + b, 0) / w.length;
+      w = w.map(x => (x - mean));
+      const std = Math.sqrt(w.reduce((a, b) => a + b*b, 0) / w.length);
+      w = w.map(x => x / std);
 
-  // Round to nearest refresh duration
-  w = w.map(x => Math.round(x / step) * step);
+      // Scale to range
+      const min = Math.min(...w);
+      const max = Math.max(...w);
+      w = w.map(x => (x - min) / (max - min) * (high - low) + low);
 
-  // Create w1 and w2
-  let w1 = w.map(x => Math.round(x));
-  let w2 = [...w1];
-  for (let i = w2.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [w2[i], w2[j]] = [w2[j], w2[i]];
-  }
+      // Round to refresh time
+      w = w.map(x => Math.round(x / step) * step);
 
-  // Choose block order
-  let durations = [];
-  let labels = [];
-  if (Math.random() < 0.5) {
-      durations = w1.concat(w2).map(x => x / 1000.0); // ms to sec
-      labels = Array(n_trl).fill('low').concat(Array(n_trl).fill('high'));
-  } else {
-      durations = w2.concat(w1).map(x => x / 1000.0);
-      labels = Array(n_trl).fill('high').concat(Array(n_trl).fill('low'));
-  }
+      const w1 = w.map(x => Math.round(x)); // random walk round - low
+      const w2 = [...w1].sort(() => Math.random() - 0.5); // shuffled - high
 
-  // Practice trials
-  let practice_count = 3;
-  let practice_options = [1.1, 1.2, 1.3];
-  let practice_durations = [];
-  for (let i = 0; i < practice_count; i++) {
-      let choice = practice_options[Math.floor(Math.random() * practice_options.length)];
-      practice_durations.push(choice);
-  }
-  let practice_labels = Array(practice_count).fill('practice');
+      // Choose block order
+      let durations, labels;
+      if (Math.random() < 0.5) {
+          durations = [...w1, ...w2].map(x => x / 1000.0);
+          labels = [...Array(n_trl).fill('low'), ...Array(n_trl).fill('high')];
+      } else {
+          durations = [...w2, ...w1].map(x => x / 1000.0);
+          labels = [...Array(n_trl).fill('high'), ...Array(n_trl).fill('low')];
+      }
 
-  // Combine
-  durations = practice_durations.concat(durations);
-  labels = practice_labels.concat(labels);
+      // Practice trials
+      const practice_count = 3; // piloting phase
+      const practice_options = [1.1, 1.2, 1.3];
+      const practice_durations = Array(practice_count).fill(0)
+          .map(() => practice_options[Math.floor(Math.random() * practice_options.length)]);
+      const practice_labels = Array(practice_count).fill('practice');
 
-  // Generate trial objects
-  trialList = [];
-  for (let i = 0; i < durations.length; i++) {
-      trialList.push({
+      // Combine practice + blocks
+      durations = [...practice_durations, ...durations];
+      labels = [...practice_labels, ...labels];
+
+      // Create trial list
+      const trials = durations.map((duration, i) => ({
           trlno: i + 1,
-          duration: durations[i],
+          duration: duration,
           stochasticity: labels[i]
-      });
+      }));
+
+      return trials;
   }
 
+  // Usage:
+  subCond = generateSequence(psychoJS.experimentOptions.participant);
   // Initialize components for Routine "block"
   blockClock = new util.Clock();
   text = new visual.TextStim({
@@ -517,10 +512,9 @@ function scale_setupRoutineBegin(snapshot) {
     // keep track of which components have finished
     scale_setupComponents = [];
 
-    scale_setupComponents.forEach( function(thisComponent) {
+    for (const thisComponent of scale_setupComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -544,11 +538,11 @@ function scale_setupRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    scale_setupComponents.forEach( function(thisComponent) {
+    for (const thisComponent of scale_setupComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -563,11 +557,11 @@ function scale_setupRoutineEachFrame() {
 function scale_setupRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'scale_setup' ---
-    scale_setupComponents.forEach( function(thisComponent) {
+    for (const thisComponent of scale_setupComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // the Routine "scale_setup" was not non-slip safe, so reset the non-slip timer
     routineTimer.reset();
 
@@ -597,9 +591,8 @@ function key_scaleLoopBegin(key_scaleLoopScheduler, snapshot) {
     currentLoop = key_scale;  // we're now the current loop
 
     // Schedule all the trials in the trialList:
-    key_scale.forEach(function() {
+    for (const thisKey_scale of key_scale) {
       snapshot = key_scale.getSnapshot();
-
       key_scaleLoopScheduler.add(importConditions(snapshot));
       key_scaleLoopScheduler.add(screen_scale_keysRoutineBegin(snapshot));
       key_scaleLoopScheduler.add(screen_scale_keysRoutineEachFrame());
@@ -608,7 +601,7 @@ function key_scaleLoopBegin(key_scaleLoopScheduler, snapshot) {
       key_scaleLoopScheduler.add(rectangle_keysRoutineEachFrame());
       key_scaleLoopScheduler.add(rectangle_keysRoutineEnd(snapshot));
       key_scaleLoopScheduler.add(key_scaleLoopEndIteration(key_scaleLoopScheduler, snapshot));
-    });
+    }
 
     return Scheduler.Event.NEXT;
   }
@@ -662,9 +655,8 @@ function trialsLoopBegin(trialsLoopScheduler, snapshot) {
     currentLoop = trials;  // we're now the current loop
 
     // Schedule all the trials in the trialList:
-    trials.forEach(function() {
+    for (const thisTrial of trials) {
       snapshot = trials.getSnapshot();
-
       trialsLoopScheduler.add(importConditions(snapshot));
       trialsLoopScheduler.add(blockRoutineBegin(snapshot));
       trialsLoopScheduler.add(blockRoutineEachFrame());
@@ -685,7 +677,7 @@ function trialsLoopBegin(trialsLoopScheduler, snapshot) {
       trialsLoopScheduler.add(itiRoutineEachFrame());
       trialsLoopScheduler.add(itiRoutineEnd(snapshot));
       trialsLoopScheduler.add(trialsLoopEndIteration(trialsLoopScheduler, snapshot));
-    });
+    }
 
     return Scheduler.Event.NEXT;
   }
@@ -750,10 +742,9 @@ function screen_scale_keysRoutineBegin(snapshot) {
     screen_scale_keysComponents.push(text_bottom);
     screen_scale_keysComponents.push(ccimage);
 
-    screen_scale_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of screen_scale_keysComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -862,11 +853,11 @@ function screen_scale_keysRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    screen_scale_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of screen_scale_keysComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -881,11 +872,11 @@ function screen_scale_keysRoutineEachFrame() {
 function screen_scale_keysRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'screen_scale_keys' ---
-    screen_scale_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of screen_scale_keysComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // Run 'End Routine' code from scale_keys_code
     psychoJS.experiment.addData("X Scale", x_scale);
     psychoJS.experiment.addData("Y Scale", y_scale);
@@ -929,10 +920,9 @@ function rectangle_keysRoutineBegin(snapshot) {
     rectangle_keysComponents.push(polygon_keys);
     rectangle_keysComponents.push(key_resp_keys);
 
-    rectangle_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of rectangle_keysComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1001,11 +991,11 @@ function rectangle_keysRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    rectangle_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of rectangle_keysComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -1020,11 +1010,11 @@ function rectangle_keysRoutineEachFrame() {
 function rectangle_keysRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'rectangle_keys' ---
-    rectangle_keysComponents.forEach( function(thisComponent) {
+    for (const thisComponent of rectangle_keysComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // update the trial handler
     if (currentLoop instanceof MultiStairHandler) {
       currentLoop.addResponse(key_resp_keys.corr, level);
@@ -1074,10 +1064,9 @@ function InstructionRoutineBegin(snapshot) {
     InstructionComponents.push(text_inst);
     InstructionComponents.push(instr_key);
 
-    InstructionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of InstructionComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1136,11 +1125,11 @@ function InstructionRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    InstructionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of InstructionComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -1155,11 +1144,11 @@ function InstructionRoutineEachFrame() {
 function InstructionRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'Instruction' ---
-    InstructionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of InstructionComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     instr_key.stop();
     // the Routine "Instruction" was not non-slip safe, so reset the non-slip timer
     routineTimer.reset();
@@ -1215,10 +1204,9 @@ function blockRoutineBegin(snapshot) {
     blockComponents.push(text);
     blockComponents.push(key_resp);
 
-    blockComponents.forEach( function(thisComponent) {
+    for (const thisComponent of blockComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1281,11 +1269,11 @@ function blockRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    blockComponents.forEach( function(thisComponent) {
+    for (const thisComponent of blockComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -1300,11 +1288,11 @@ function blockRoutineEachFrame() {
 function blockRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'block' ---
-    blockComponents.forEach( function(thisComponent) {
+    for (const thisComponent of blockComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     key_resp.stop();
     // the Routine "block" was not non-slip safe, so reset the non-slip timer
     routineTimer.reset();
@@ -1343,10 +1331,9 @@ function EncodingRoutineBegin(snapshot) {
     EncodingComponents.push(stimulus_grating);
     EncodingComponents.push(fixation);
 
-    EncodingComponents.forEach( function(thisComponent) {
+    for (const thisComponent of EncodingComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1405,11 +1392,11 @@ function EncodingRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    EncodingComponents.forEach( function(thisComponent) {
+    for (const thisComponent of EncodingComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -1424,11 +1411,11 @@ function EncodingRoutineEachFrame() {
 function EncodingRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'Encoding' ---
-    EncodingComponents.forEach( function(thisComponent) {
+    for (const thisComponent of EncodingComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // the Routine "Encoding" was not non-slip safe, so reset the non-slip timer
     routineTimer.reset();
 
@@ -1461,10 +1448,9 @@ function cue_to_reproduceRoutineBegin(snapshot) {
     cue_to_reproduceComponents = [];
     cue_to_reproduceComponents.push(rep_cue);
 
-    cue_to_reproduceComponents.forEach( function(thisComponent) {
+    for (const thisComponent of cue_to_reproduceComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1503,11 +1489,11 @@ function cue_to_reproduceRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    cue_to_reproduceComponents.forEach( function(thisComponent) {
+    for (const thisComponent of cue_to_reproduceComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine && routineTimer.getTime() > 0) {
@@ -1522,11 +1508,11 @@ function cue_to_reproduceRoutineEachFrame() {
 function cue_to_reproduceRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'cue_to_reproduce' ---
-    cue_to_reproduceComponents.forEach( function(thisComponent) {
+    for (const thisComponent of cue_to_reproduceComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     if (cue_to_reproduceMaxDurationReached) {
         cue_to_reproduceClock.add(cue_to_reproduceMaxDuration);
     } else {
@@ -1572,10 +1558,9 @@ function ReproductionRoutineBegin(snapshot) {
     ReproductionComponents = [];
     ReproductionComponents.push(gabor);
 
-    ReproductionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of ReproductionComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1638,11 +1623,11 @@ function ReproductionRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    ReproductionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of ReproductionComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -1657,11 +1642,11 @@ function ReproductionRoutineEachFrame() {
 function ReproductionRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'Reproduction' ---
-    ReproductionComponents.forEach( function(thisComponent) {
+    for (const thisComponent of ReproductionComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // Run 'End Routine' code from code_reproduction
     psychoJS.experiment.addData("orientation", orientation);
     psychoJS.experiment.addData("rpr_onset", keyOnset);
@@ -1714,10 +1699,9 @@ function feedbackRoutineBegin(snapshot) {
     feedbackComponents = [];
     feedbackComponents.push(feedback_text);
 
-    feedbackComponents.forEach( function(thisComponent) {
+    for (const thisComponent of feedbackComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1760,11 +1744,11 @@ function feedbackRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    feedbackComponents.forEach( function(thisComponent) {
+    for (const thisComponent of feedbackComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine && routineTimer.getTime() > 0) {
@@ -1779,11 +1763,11 @@ function feedbackRoutineEachFrame() {
 function feedbackRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'feedback' ---
-    feedbackComponents.forEach( function(thisComponent) {
+    for (const thisComponent of feedbackComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     psychoJS.experiment.addData('feedback.stopped', globalClock.getTime());
     if (feedbackMaxDurationReached) {
         feedbackClock.add(feedbackMaxDuration);
@@ -1819,10 +1803,9 @@ function itiRoutineBegin(snapshot) {
     itiComponents = [];
     itiComponents.push(iti_blank);
 
-    itiComponents.forEach( function(thisComponent) {
+    for (const thisComponent of itiComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -1861,11 +1844,11 @@ function itiRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    itiComponents.forEach( function(thisComponent) {
+    for (const thisComponent of itiComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine && routineTimer.getTime() > 0) {
@@ -1880,11 +1863,11 @@ function itiRoutineEachFrame() {
 function itiRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'iti' ---
-    itiComponents.forEach( function(thisComponent) {
+    for (const thisComponent of itiComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     if (itiMaxDurationReached) {
         itiClock.add(itiMaxDuration);
     } else {
@@ -1958,10 +1941,9 @@ function GoodbyeRoutineBegin(snapshot) {
     GoodbyeComponents.push(goodbye_text);
     GoodbyeComponents.push(goodbye_key);
 
-    GoodbyeComponents.forEach( function(thisComponent) {
+    for (const thisComponent of GoodbyeComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
-       });
     return Scheduler.Event.NEXT;
   }
 }
@@ -2020,11 +2002,11 @@ function GoodbyeRoutineEachFrame() {
     }
 
     continueRoutine = false;  // reverts to True if at least one component still running
-    GoodbyeComponents.forEach( function(thisComponent) {
+    for (const thisComponent of GoodbyeComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
+        break;
       }
-    });
 
     // refresh the screen if continuing
     if (continueRoutine) {
@@ -2039,11 +2021,11 @@ function GoodbyeRoutineEachFrame() {
 function GoodbyeRoutineEnd(snapshot) {
   return async function () {
     //--- Ending Routine 'Goodbye' ---
-    GoodbyeComponents.forEach( function(thisComponent) {
+    for (const thisComponent of GoodbyeComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
-    });
+    }
     // update the trial handler
     if (currentLoop instanceof MultiStairHandler) {
       currentLoop.addResponse(goodbye_key.corr, level);
