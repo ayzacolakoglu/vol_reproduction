@@ -9,7 +9,8 @@ const { Scheduler } = util;
 //some handy aliases as in the psychopy scripts;
 const { abs, sin, cos, PI: pi, sqrt } = Math;
 const { round } = util;
-var subCond
+let subCond;
+let participant;
 
 
 // store info about the experiment session:
@@ -287,12 +288,13 @@ async function experimentInit() {
 
   // Run 'Begin Experiment' code from code
   // In your PsychoJS code
-  function generateSequence(participantId) {
+  function generateSequence() {
       // Parameters
       const low = 600; // ms
       const high = 1800; // ms
       const step = 16.67; // ms for 60Hz refresh rate
       const n_trl = 3; // piloting phase
+      const participant = "participant"
 
       // Generate random walk
       let w = new Array(n_trl).fill(0).map((_, i, arr) =>
@@ -347,7 +349,7 @@ async function experimentInit() {
   }
 
   // Usage:
-  subCond = generateSequence(psychoJS.experimentOptions.participant);
+  subCond = generateSequence();
   // Initialize components for Routine "block"
   blockClock = new util.Clock();
   text = new visual.TextStim({
