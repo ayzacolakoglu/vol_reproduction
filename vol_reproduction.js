@@ -347,7 +347,6 @@ async function experimentInit() {
 
       return trials;
   }
-
   // Usage:
   subCond = generateSequence();
   console.log(subCond);
