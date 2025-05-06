@@ -138,10 +138,6 @@ var key_resp_keys;
 var InstructionClock;
 var text_inst;
 var instr_key;
-var w;
-var durations;
-var labels;
-var trialList;
 var blockClock;
 var text;
 var key_resp;
@@ -192,7 +188,7 @@ async function experimentInit() {
           vsize = 1;
       }
   }
-  
+
   // Initialize components for Routine "screen_scale_keys"
   screen_scale_keysClock = new util.Clock();
   text_top = new visual.TextStim({
@@ -200,37 +196,37 @@ async function experimentInit() {
     name: 'text_top',
     text: 'Resize this image to match the size of a credit card\nUp arrow for taller\nDown arrow for shorter\nLeft arrow for narrower\nRight arrow for wider',
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, 0.7], draggable: false, height: 0.1,  wrapWidth: 1.5, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: -1.0 
+    depth: -1.0
   });
-  
+
   text_bottom = new visual.TextStim({
     win: psychoJS.window,
     name: 'text_bottom',
     text: 'Press the space bar when done',
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, (- 0.6)], draggable: false, height: 0.1,  wrapWidth: 1.5, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: -2.0 
+    depth: -2.0
   });
-  
+
   ccimage = new visual.ImageStim({
     win : psychoJS.window,
-    name : 'ccimage', units : 'pix', 
+    name : 'ccimage', units : 'pix',
     image : 'bank-1300155_640.png', mask : undefined,
     anchor : 'center',
-    ori : 0.0, 
-    pos : [0, 0], 
+    ori : 0.0,
+    pos : [0, 0],
     draggable: false,
     size : [(x_size * x_scale), (y_size * y_scale)],
     color : new util.Color([1,1,1]), opacity : undefined,
     flipHoriz : false, flipVert : false,
-    texRes : 128.0, interpolate : true, depth : -3.0 
+    texRes : 128.0, interpolate : true, depth : -3.0
   });
   // Initialize components for Routine "rectangle_keys"
   rectangle_keysClock = new util.Clock();
@@ -239,31 +235,31 @@ async function experimentInit() {
     name: 'rectangle_text',
     text: 'This shape should be a 10 cm square.\nComponent size  (10*x_scale, 10*y_scale) set every repeat.\nPress space to continue.',
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, (- 0.8)], draggable: false, height: 0.1,  wrapWidth: 1.5, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: 0.0 
+    depth: 0.0
   });
-  
+
   polygon_keys = new visual.Rect ({
-    win: psychoJS.window, name: 'polygon_keys', units : 'pix', 
+    win: psychoJS.window, name: 'polygon_keys', units : 'pix',
     width: [1.0, 1.0][0], height: [1.0, 1.0][1],
-    ori: 0.0, 
-    pos: [0, 0], 
-    draggable: false, 
-    anchor: 'center', 
-    lineWidth: 1.0, 
-    lineColor: new util.Color([1,1,1]), 
-    fillColor: new util.Color([1,1,1]), 
-    colorSpace: 'rgb', 
-    opacity: undefined, 
-    depth: -1, 
-    interpolate: true, 
+    ori: 0.0,
+    pos: [0, 0],
+    draggable: false,
+    anchor: 'center',
+    lineWidth: 1.0,
+    lineColor: new util.Color([1,1,1]),
+    fillColor: new util.Color([1,1,1]),
+    colorSpace: 'rgb',
+    opacity: undefined,
+    depth: -1,
+    interpolate: true,
   });
-  
+
   key_resp_keys = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
-  
+
   // Initialize components for Routine "Instruction"
   InstructionClock = new util.Clock();
   text_inst = new visual.TextStim({
@@ -271,88 +267,78 @@ async function experimentInit() {
     name: 'text_inst',
     text: "Experimental Instruction\n\nWelcome to our reproduction experiment. In this experiment, you will see a Gabor patch appears on the screen. You need to remember the DURATION of the Gabor patch. After it disappears, you are asked to press the 'Down' Arrow key as long as what you perceived. The key press will show a Gabor patch again, helping you compare the last duration. \n\nPress SPACE to start ...\n",
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, 0], draggable: false, height: 0.1,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: 0.0 
+    depth: 0.0
   });
-  
+
   instr_key = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
-  
+
   // Run 'Begin Experiment' code from code
-  // JavaScript doesn't have numpy or pandas, so we use regular arrays and math
-  console.log("intruction begin");
-  let low = 600; // ms
-  let high = 1800; // ms
-  let step = 16.67; // ms for 60Hz
-  let n_trl = 3;
-  
-  // Generate random walk
-  let w = [];
-  for (let i = 0; i < n_trl; i++) {
-      w.push((Math.random() * 2 - 1)); // simple random noise
-  }
-  // Cumulative sum
-  for (let i = 1; i < w.length; i++) {
-      w[i] += w[i - 1];
-  }
-  // Normalize
-  let mean = w.reduce((a, b) => a + b) / w.length;
-  let std = Math.sqrt(w.map(x => (x - mean) ** 2).reduce((a, b) => a + b) / w.length);
-  w = w.map(x => (x - mean) / std);
-  
-  // Rescale to low-high range
-  let minVal = Math.min(...w);
-  let maxVal = Math.max(...w);
-  w = w.map(x => ((x - minVal) / (maxVal - minVal)) * (high - low) + low);
-  
-  // Round to nearest refresh duration
-  w = w.map(x => Math.round(x / step) * step);
-  
-  // Create w1 and w2
-  let w1 = w.map(x => Math.round(x));
-  let w2 = [...w1];
-  for (let i = w2.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [w2[i], w2[j]] = [w2[j], w2[i]];
-  }
-  
-  // Choose block order
-  let durations = [];
-  let labels = [];
-  if (Math.random() < 0.5) {
-      durations = w1.concat(w2).map(x => x / 1000.0); // ms to sec
-      labels = Array(n_trl).fill('low').concat(Array(n_trl).fill('high'));
-  } else {
-      durations = w2.concat(w1).map(x => x / 1000.0);
-      labels = Array(n_trl).fill('high').concat(Array(n_trl).fill('low'));
-  }
-  
-  // Practice trials
-  let practice_count = 3;
-  let practice_options = [1.1, 1.2, 1.3];
-  let practice_durations = [];
-  for (let i = 0; i < practice_count; i++) {
-      let choice = practice_options[Math.floor(Math.random() * practice_options.length)];
-      practice_durations.push(choice);
-  }
-  let practice_labels = Array(practice_count).fill('practice');
-  
-  // Combine
-  durations = practice_durations.concat(durations);
-  labels = practice_labels.concat(labels);
-  
-  // Generate trial objects
-  trialList = [];
-  for (let i = 0; i < durations.length; i++) {
-      trialList.push({
+  // In your PsychoJS code
+  function generateSequence(participantId) {
+      // Parameters
+      const low = 600; // ms
+      const high = 1800; // ms
+      const step = 16.67; // ms for 60Hz refresh rate
+      const n_trl = 3; // piloting phase
+
+      // Generate random walk
+      let w = new Array(n_trl).fill(0).map((_, i, arr) =>
+          arr.slice(0, i+1).reduce((a) => a + Math.random()*2-1, 0));
+
+      // Normalization
+      const mean = w.reduce((a, b) => a + b, 0) / w.length;
+      w = w.map(x => (x - mean));
+      const std = Math.sqrt(w.reduce((a, b) => a + b*b, 0) / w.length);
+      w = w.map(x => x / std);
+
+      // Scale to range
+      const min = Math.min(...w);
+      const max = Math.max(...w);
+      w = w.map(x => (x - min) / (max - min) * (high - low) + low);
+
+      // Round to refresh time
+      w = w.map(x => Math.round(x / step) * step);
+
+      const w1 = w.map(x => Math.round(x)); // random walk round - low
+      const w2 = [...w1].sort(() => Math.random() - 0.5); // shuffled - high
+
+      // Choose block order
+      let durations, labels;
+      if (Math.random() < 0.5) {
+          durations = [...w1, ...w2].map(x => x / 1000.0);
+          labels = [...Array(n_trl).fill('low'), ...Array(n_trl).fill('high')];
+      } else {
+          durations = [...w2, ...w1].map(x => x / 1000.0);
+          labels = [...Array(n_trl).fill('high'), ...Array(n_trl).fill('low')];
+      }
+
+      // Practice trials
+      const practice_count = 3; // piloting phase
+      const practice_options = [1.1, 1.2, 1.3];
+      const practice_durations = Array(practice_count).fill(0)
+          .map(() => practice_options[Math.floor(Math.random() * practice_options.length)]);
+      const practice_labels = Array(practice_count).fill('practice');
+
+      // Combine practice + blocks
+      durations = [...practice_durations, ...durations];
+      labels = [...practice_labels, ...labels];
+
+      // Create trial list
+      const trials = durations.map((duration, i) => ({
           trlno: i + 1,
-          duration: durations[i],
+          duration: duration,
           stochasticity: labels[i]
-      });
+      }));
+
+      return trials;
   }
-  
+
+  // Usage:
+  const subCond = generateSequence(psychoJS.experimentOptions.participant);
   // Initialize components for Routine "block"
   blockClock = new util.Clock();
   text = new visual.TextStim({
@@ -360,26 +346,26 @@ async function experimentInit() {
     name: 'text',
     text: '',
     font: 'Arial',
-    units: 'norm', 
+    units: 'norm',
     pos: [0, 0], draggable: false, height: 0.1,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
-    depth: 0.0 
+    depth: 0.0
   });
-  
+
   key_resp = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
-  
+
   // Run 'Begin Experiment' code from code_2
   console.log("block text printed");
   Block_text = "";
-  
+
   // Initialize components for Routine "Encoding"
   EncodingClock = new util.Clock();
   stimulus_grating = new visual.GratingStim({
     win : psychoJS.window,
-    name : 'stimulus_grating', units : 'norm', 
+    name : 'stimulus_grating', units : 'norm',
     tex : undefined, mask : 'gauss',
-    ori : 1.0, 
+    ori : 1.0,
     pos : [0, 0],
     draggable: false,
     anchor : 'center',
@@ -387,10 +373,10 @@ async function experimentInit() {
     size : [(0.007 * x_scale), (0.015 * y_scale)],
     color : new util.Color([1,1,1]), opacity : undefined,
     contrast : 0.4, blendmode : 'avg',
-    texRes : 128.0, interpolate : true, depth : 0.0 
+    texRes : 128.0, interpolate : true, depth : 0.0
   });
   fixation = new visual.ShapeStim ({
-    win: psychoJS.window, name: 'fixation', units : 'height', 
+    win: psychoJS.window, name: 'fixation', units : 'height',
     vertices: 'cross', size:[(0.0004 * x_scale), (0.0004 * x_scale)],
     ori: 0.0,
     pos: [0, 0],
