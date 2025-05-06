@@ -30,6 +30,7 @@ const psychoJS = new PsychoJS({
   debug: true
 });
 
+
 // open window:
 psychoJS.openWindow({
   fullscr: true,
