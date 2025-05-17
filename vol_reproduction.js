@@ -1,4 +1,4 @@
-﻿/************************* 
+/************************* 
  * Vol_Reproduction *
  *************************/
 
@@ -163,6 +163,7 @@ var gabor;
 var feedbackClock;
 var showFeedback;
 var feedback_text;
+var key_resp_2;
 var itiClock;
 var iti_blank;
 var GoodbyeClock;
@@ -472,11 +473,13 @@ async function experimentInit() {
     text: '',
     font: 'Arial',
     units: 'norm', 
-    pos: [0, 0], draggable: false, height: 0.1,  wrapWidth: undefined, ori: 0.0,
+    pos: [0, 0], draggable: false, height: 0.07,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
     depth: -1.0 
   });
+  
+  key_resp_2 = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
   
   // Initialize components for Routine "iti"
   itiClock = new util.Clock();
@@ -1736,6 +1739,7 @@ function ReproductionRoutineEnd(snapshot) {
 
 var feedbackMaxDurationReached;
 var fb_text;
+var _key_resp_2_allKeys;
 var maxDurationReached;
 var feedbackMaxDuration;
 var feedbackComponents;
@@ -1747,27 +1751,32 @@ function feedbackRoutineBegin(snapshot) {
     t = 0;
     frameN = -1;
     continueRoutine = true; // until we're told otherwise
-    feedbackClock.reset(routineTimer.getTime());
-    routineTimer.add(2.000000);
+    feedbackClock.reset();
+    routineTimer.reset();
     feedbackMaxDurationReached = false;
     // update component parameters for each repeat
     // Run 'Begin Routine' code from feedback_code
     showFeedback = false;  // default: don't show
     
     if (stochasticity === 'practice') {
-        error_ratio = Math.abs((repDuration / duration) - 1);
-    
-        if (error_ratio > 0.4) {
-            fb_text = "Your key pressed duration deviated too far!";
-            showFeedback = true;
+            error_ratio = Math.abs((repDuration / duration) - 1);
+        
+            if (error_ratio > 0.4) {
+                fb_text = `Your key pressed duration deviated too far!\n\n\npress SPACE to continue`;
+                showFeedback = true;
+            } else {
+                fb_text = "";
+            }
         } else {
-            fb_text = "";
+            fb_text = "";  // formal trials shouldn't show feedback
         }
-    } else {
-        fb_text = "";  // formal trials shouldn't show feedback
-    }
+    
+    
     
     feedback_text.setText(fb_text);
+    key_resp_2.keys = undefined;
+    key_resp_2.rt = undefined;
+    _key_resp_2_allKeys = [];
     // skip this Routine if its 'Skip if' condition is True
     continueRoutine = continueRoutine && !(skipRoutine);
     maxDurationReached = false
@@ -1775,6 +1784,7 @@ function feedbackRoutineBegin(snapshot) {
     // keep track of which components have finished
     feedbackComponents = [];
     feedbackComponents.push(feedback_text);
+    feedbackComponents.push(key_resp_2);
     
     for (const thisComponent of feedbackComponents)
       if ('status' in thisComponent)
@@ -1801,9 +1811,29 @@ function feedbackRoutineEachFrame() {
       feedback_text.setAutoDraw(true);
     }
     
-    frameRemains = 0.0 + 2 - psychoJS.window.monitorFramePeriod * 0.75;// most of one frame period left
-    if (feedback_text.status === PsychoJS.Status.STARTED && t >= frameRemains) {
-      feedback_text.setAutoDraw(false);
+    
+    // *key_resp_2* updates
+    if (t >= 0.0 && key_resp_2.status === PsychoJS.Status.NOT_STARTED) {
+      // keep track of start time/frame for later
+      key_resp_2.tStart = t;  // (not accounting for frame time here)
+      key_resp_2.frameNStart = frameN;  // exact frame index
+      
+      // keyboard checking is just starting
+      psychoJS.window.callOnFlip(function() { key_resp_2.clock.reset(); });  // t=0 on next screen flip
+      psychoJS.window.callOnFlip(function() { key_resp_2.start(); }); // start on screen flip
+      psychoJS.window.callOnFlip(function() { key_resp_2.clearEvents(); });
+    }
+    
+    if (key_resp_2.status === PsychoJS.Status.STARTED) {
+      let theseKeys = key_resp_2.getKeys({keyList: ['space'], waitRelease: false});
+      _key_resp_2_allKeys = _key_resp_2_allKeys.concat(theseKeys);
+      if (_key_resp_2_allKeys.length > 0) {
+        key_resp_2.keys = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].name;  // just the last key pressed
+        key_resp_2.rt = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].rt;
+        key_resp_2.duration = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].duration;
+        // a response ends the routine
+        continueRoutine = false;
+      }
     }
     
     // check for quit (typically the Esc key)
@@ -1824,7 +1854,7 @@ function feedbackRoutineEachFrame() {
       }
     
     // refresh the screen if continuing
-    if (continueRoutine && routineTimer.getTime() > 0) {
+    if (continueRoutine) {
       return Scheduler.Event.FLIP_REPEAT;
     } else {
       return Scheduler.Event.NEXT;
@@ -1841,11 +1871,21 @@ function feedbackRoutineEnd(snapshot) {
         thisComponent.setAutoDraw(false);
       }
     }
-    if (feedbackMaxDurationReached) {
-        feedbackClock.add(feedbackMaxDuration);
-    } else {
-        feedbackClock.add(2.000000);
+    // update the trial handler
+    if (currentLoop instanceof MultiStairHandler) {
+      currentLoop.addResponse(key_resp_2.corr, level);
     }
+    psychoJS.experiment.addData('key_resp_2.keys', key_resp_2.keys);
+    if (typeof key_resp_2.keys !== 'undefined') {  // we had a response
+        psychoJS.experiment.addData('key_resp_2.rt', key_resp_2.rt);
+        psychoJS.experiment.addData('key_resp_2.duration', key_resp_2.duration);
+        routineTimer.reset();
+        }
+    
+    key_resp_2.stop();
+    // the Routine "feedback" was not non-slip safe, so reset the non-slip timer
+    routineTimer.reset();
+    
     // Routines running outside a loop should always advance the datafile row
     if (currentLoop === psychoJS.experiment) {
       psychoJS.experiment.nextEntry(snapshot);
