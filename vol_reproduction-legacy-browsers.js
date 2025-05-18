@@ -289,7 +289,7 @@ async function experimentInit() {
       const high = 1800; // ms (maximum duration)
       const step = 16.67; // ms (60Hz refresh rate)
       const n_trl = 100; // trials per block
-      //const n_trl = 50; // piloting phase
+      //const n_trl = 25; // piloting phase
   
       // ===== 1. Generate Random Walk (LOW stochasticity) =====
       let w = new Array(n_trl).fill(0);
@@ -1209,6 +1209,7 @@ function blockRoutineBegin(snapshot) {
     continueRoutine = false;
     console.log(stochasticity);
     let trialIndex = trials.thisTrialN;  // 0-based trial number
+    console.log(trialIndex);
     
     if (trialIndex === 0) {
         Block_text = `Practice will start.\n\nPlease press SPACE to continue.`;
@@ -1221,11 +1222,13 @@ function blockRoutineBegin(snapshot) {
         continueRoutine = true;
     }
     
-    //else if (trialIndex === 6) {
+    //else if (trialIndex === 28) {
     else if (trialIndex === 110) {
         Block_text = `Block 1/3 complete.\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
+        continueRoutine = true;
+    
     }
-    //else if (trialIndex === 9) {
+    //else if (trialIndex === 53) {
     else if (trialIndex === 210) {
         Block_text = `Block 2/3 complete.\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
         continueRoutine = true;
