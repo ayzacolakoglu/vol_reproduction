@@ -75,9 +75,9 @@ flowScheduler.add(trialsLoopEnd);
 
 
 
-flowScheduler.add(GoodbyeRoutineBegin());
-flowScheduler.add(GoodbyeRoutineEachFrame());
-flowScheduler.add(GoodbyeRoutineEnd());
+flowScheduler.add(exitRoutineBegin());
+flowScheduler.add(exitRoutineEachFrame());
+flowScheduler.add(exitRoutineEnd());
 flowScheduler.add(quitPsychoJS, 'Thank you for your patience.', true);
 
 // quit if user presses Cancel in dialog box:
@@ -166,9 +166,8 @@ var feedback_text;
 var key_resp_2;
 var itiClock;
 var iti_blank;
-var GoodbyeClock;
-var goodbye_text;
-var goodbye_key;
+var exitClock;
+var save_data_text;
 var globalClock;
 var routineTimer;
 async function experimentInit() {
@@ -289,15 +288,15 @@ async function experimentInit() {
   instr_key = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
   
   // Run 'Begin Experiment' code from code
-  practice_count = 10
-  //practice_count = 3 // piloting phase
+  //practice_count = 10
+  practice_count = 2 // piloting phase
   function generateSequence() {
       // Parameters
       const low = 600; // ms (minimum duration)
       const high = 1800; // ms (maximum duration)
       const step = 16.67; // ms (60Hz refresh rate)
-      const n_trl = 100; // trials per block
-      //const n_trl = 25; // piloting phase
+      //const n_trl = 100; // trials per block
+      const n_trl = 2; // piloting phase
   
       // ===== 1. Generate Random Walk (LOW stochasticity) =====
       let w = new Array(n_trl).fill(0);
@@ -495,21 +494,19 @@ async function experimentInit() {
     depth: 0.0 
   });
   
-  // Initialize components for Routine "Goodbye"
-  GoodbyeClock = new util.Clock();
-  goodbye_text = new visual.TextStim({
+  // Initialize components for Routine "exit"
+  exitClock = new util.Clock();
+  save_data_text = new visual.TextStim({
     win: psychoJS.window,
-    name: 'goodbye_text',
-    text: 'The whole experiment is completed! \n\nMany thanks for your participation!\n\nPress SPACE to exit...',
+    name: 'save_data_text',
+    text: 'The whole experiment is completed! \n\nMany thanks for your participation!\n\nPlease wait while we save your results...',
     font: 'Arial',
     units: 'norm', 
-    pos: [0, 0], draggable: false, height: 0.1,  wrapWidth: undefined, ori: 0.0,
+    pos: [0, 0], draggable: false, height: 0.07,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
     depth: 0.0 
   });
-  
-  goodbye_key = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
   
   // Create some handy timers
   globalClock = new util.Clock();  // to track the time since experiment started
@@ -1217,21 +1214,21 @@ function blockRoutineBegin(snapshot) {
         Block_text = `Practice will start.\n\nPlease press SPACE to continue.`;
         continueRoutine = true;
     }
-    //else if (trialIndex === 3) {
-    else if (trialIndex === 10) {
+    else if (trialIndex === 2) {
+    //else if (trialIndex === 10) {
         Block_text = `Formal Experiment will start now. \n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
         skipRoutine = true
         continueRoutine = true;
     }
     
-    //else if (trialIndex === 28) {
-    else if (trialIndex === 110) {
+    else if (trialIndex === 4) {
+    //else if (trialIndex === 110) {
         Block_text = `Block 1/3 complete.\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
         continueRoutine = true;
     
     }
-    //else if (trialIndex === 53) {
-    else if (trialIndex === 210) {
+    else if (trialIndex === 6) {
+    //else if (trialIndex === 210) {
         Block_text = `Block 2/3 complete.\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
         continueRoutine = true;
     }
@@ -1720,9 +1717,13 @@ function ReproductionRoutineEnd(snapshot) {
       }
     }
     // Run 'End Routine' code from code_reproduction
+    psychoJS.experiment.addData("trlno", trlno);
     psychoJS.experiment.addData("orientation", orientation);
     psychoJS.experiment.addData("rpr_onset", keyOnset);
-    psychoJS.experiment.addData("rpr_duration", repDuration);
+    psychoJS.experiment.addData("rpr_offset", keyOffset);
+    psychoJS.experiment.addData("rpr_duration", repDuration.toFixed(3));
+    psychoJS.experiment.addData("stim_duration", duration);
+    psychoJS.experiment.addData("stochasticity", stochasticity);
     if (stochasticity === 'practice') {
         error_ratio = Math.abs((repDuration / duration) - 1);
         skipRoutine = (trlno > 10) || (error_ratio <= 0.4);
@@ -1997,25 +1998,21 @@ function itiRoutineEnd(snapshot) {
 }
 
 
-var GoodbyeMaxDurationReached;
-var _goodbye_key_allKeys;
-var GoodbyeMaxDuration;
-var GoodbyeComponents;
-function GoodbyeRoutineBegin(snapshot) {
+var exitMaxDurationReached;
+var exitMaxDuration;
+var exitComponents;
+function exitRoutineBegin(snapshot) {
   return async function () {
     TrialHandler.fromSnapshot(snapshot); // ensure that .thisN vals are up to date
     
-    //--- Prepare to start Routine 'Goodbye' ---
+    //--- Prepare to start Routine 'exit' ---
     t = 0;
     frameN = -1;
     continueRoutine = true; // until we're told otherwise
-    GoodbyeClock.reset();
+    exitClock.reset();
     routineTimer.reset();
-    GoodbyeMaxDurationReached = false;
+    exitMaxDurationReached = false;
     // update component parameters for each repeat
-    goodbye_key.keys = undefined;
-    goodbye_key.rt = undefined;
-    _goodbye_key_allKeys = [];
     // Disable downloading results to browser
     psychoJS._saveResults = 0;
     
@@ -2025,14 +2022,40 @@ function GoodbyeRoutineBegin(snapshot) {
     // Extract data object from experiment
     let dataObj = psychoJS._experiment._trialsData;
     
-    // Convert data object to CSV format
-    let data = [Object.keys(dataObj[0])]
-        .concat(dataObj.map(it => Object.values(it).toString()))
-        .join('\n');
+    let keepFields = [
+      "participant",
+      "age",
+      "gender (M/F)",
+      "trlno",
+      "orientation",
+      "stochasticity",
+      "stim_duration",
+      "rpr_duration",
+      "rpr_onset"
+    ];
+    
+    // Filter and flatten each trial object
+    let filteredData = dataObj.map(trial => {
+      let row = {};
+      keepFields.forEach(field => {
+        row[field] = trial.hasOwnProperty(field) ? trial[field] : '';
+      });
+      return row;
+    });
+    
+    // Generate CSV string
+    const csvHeader = keepFields.join(",");
+    const csvRows = filteredData.map(function(row) {
+        return keepFields.map(function(field) {
+            return JSON.stringify(row[field] !== undefined ? row[field] : "");
+        }).join(",");
+    });
+    const data = csvHeader + "\n" + csvRows.join("\n");
     
     // Send data to OSF via DataPipe
     console.log('Saving data...');
     
+    // Upload to OSF via DataPipe
     fetch('https://pipe.jspsych.org/api/data/', {
         method: 'POST',
         headers: {
@@ -2040,23 +2063,27 @@ function GoodbyeRoutineBegin(snapshot) {
             'Accept': '*/*'
         },
         body: JSON.stringify({
-            experimentID: 'ALvQXbIMCM0V', // ★ Replace with your Datapipe experiment ID ★
+            experimentID: 'ALvQXbIMCM0V', // Your actual experiment ID
             filename: filename,
-            data: data,
+            data: data, 
         }),
     })
     .then(response => response.json())
     .then(data => {
         console.log(data);
         quitPsychoJS();
+    })
+    .catch(err => {
+        console.error("Upload failed:", err);
+        quitPsychoJS();
     });
-    GoodbyeMaxDuration = null
-    // keep track of which components have finished
-    GoodbyeComponents = [];
-    GoodbyeComponents.push(goodbye_text);
-    GoodbyeComponents.push(goodbye_key);
     
-    for (const thisComponent of GoodbyeComponents)
+    exitMaxDuration = null
+    // keep track of which components have finished
+    exitComponents = [];
+    exitComponents.push(save_data_text);
+    
+    for (const thisComponent of exitComponents)
       if ('status' in thisComponent)
         thisComponent.status = PsychoJS.Status.NOT_STARTED;
     return Scheduler.Event.NEXT;
@@ -2064,46 +2091,21 @@ function GoodbyeRoutineBegin(snapshot) {
 }
 
 
-function GoodbyeRoutineEachFrame() {
+function exitRoutineEachFrame() {
   return async function () {
-    //--- Loop for each frame of Routine 'Goodbye' ---
+    //--- Loop for each frame of Routine 'exit' ---
     // get current time
-    t = GoodbyeClock.getTime();
+    t = exitClock.getTime();
     frameN = frameN + 1;// number of completed frames (so 0 is the first frame)
     // update/draw components on each frame
     
-    // *goodbye_text* updates
-    if (t >= 0.0 && goodbye_text.status === PsychoJS.Status.NOT_STARTED) {
+    // *save_data_text* updates
+    if (t >= 0.0 && save_data_text.status === PsychoJS.Status.NOT_STARTED) {
       // keep track of start time/frame for later
-      goodbye_text.tStart = t;  // (not accounting for frame time here)
-      goodbye_text.frameNStart = frameN;  // exact frame index
+      save_data_text.tStart = t;  // (not accounting for frame time here)
+      save_data_text.frameNStart = frameN;  // exact frame index
       
-      goodbye_text.setAutoDraw(true);
-    }
-    
-    
-    // *goodbye_key* updates
-    if (t >= 0.0 && goodbye_key.status === PsychoJS.Status.NOT_STARTED) {
-      // keep track of start time/frame for later
-      goodbye_key.tStart = t;  // (not accounting for frame time here)
-      goodbye_key.frameNStart = frameN;  // exact frame index
-      
-      // keyboard checking is just starting
-      psychoJS.window.callOnFlip(function() { goodbye_key.clock.reset(); });  // t=0 on next screen flip
-      psychoJS.window.callOnFlip(function() { goodbye_key.start(); }); // start on screen flip
-      psychoJS.window.callOnFlip(function() { goodbye_key.clearEvents(); });
-    }
-    
-    if (goodbye_key.status === PsychoJS.Status.STARTED) {
-      let theseKeys = goodbye_key.getKeys({keyList: ['space'], waitRelease: false});
-      _goodbye_key_allKeys = _goodbye_key_allKeys.concat(theseKeys);
-      if (_goodbye_key_allKeys.length > 0) {
-        goodbye_key.keys = _goodbye_key_allKeys[_goodbye_key_allKeys.length - 1].name;  // just the last key pressed
-        goodbye_key.rt = _goodbye_key_allKeys[_goodbye_key_allKeys.length - 1].rt;
-        goodbye_key.duration = _goodbye_key_allKeys[_goodbye_key_allKeys.length - 1].duration;
-        // a response ends the routine
-        continueRoutine = false;
-      }
+      save_data_text.setAutoDraw(true);
     }
     
     // check for quit (typically the Esc key)
@@ -2117,7 +2119,7 @@ function GoodbyeRoutineEachFrame() {
     }
     
     continueRoutine = false;  // reverts to True if at least one component still running
-    for (const thisComponent of GoodbyeComponents)
+    for (const thisComponent of exitComponents)
       if ('status' in thisComponent && thisComponent.status !== PsychoJS.Status.FINISHED) {
         continueRoutine = true;
         break;
@@ -2133,27 +2135,15 @@ function GoodbyeRoutineEachFrame() {
 }
 
 
-function GoodbyeRoutineEnd(snapshot) {
+function exitRoutineEnd(snapshot) {
   return async function () {
-    //--- Ending Routine 'Goodbye' ---
-    for (const thisComponent of GoodbyeComponents) {
+    //--- Ending Routine 'exit' ---
+    for (const thisComponent of exitComponents) {
       if (typeof thisComponent.setAutoDraw === 'function') {
         thisComponent.setAutoDraw(false);
       }
     }
-    // update the trial handler
-    if (currentLoop instanceof MultiStairHandler) {
-      currentLoop.addResponse(goodbye_key.corr, level);
-    }
-    psychoJS.experiment.addData('goodbye_key.keys', goodbye_key.keys);
-    if (typeof goodbye_key.keys !== 'undefined') {  // we had a response
-        psychoJS.experiment.addData('goodbye_key.rt', goodbye_key.rt);
-        psychoJS.experiment.addData('goodbye_key.duration', goodbye_key.duration);
-        routineTimer.reset();
-        }
-    
-    goodbye_key.stop();
-    // the Routine "Goodbye" was not non-slip safe, so reset the non-slip timer
+    // the Routine "exit" was not non-slip safe, so reset the non-slip timer
     routineTimer.reset();
     
     // Routines running outside a loop should always advance the datafile row
