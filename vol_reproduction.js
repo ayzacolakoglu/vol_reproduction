@@ -147,6 +147,7 @@ var InstructionClock;
 var text_inst;
 var instr_key;
 var practice_count;
+var n_trl;
 var subCond;
 var blockClock;
 var Block_text;
@@ -163,7 +164,6 @@ var gabor;
 var feedbackClock;
 var showFeedback;
 var feedback_text;
-var key_resp_2;
 var itiClock;
 var iti_blank;
 var exitClock;
@@ -174,6 +174,9 @@ async function experimentInit() {
   // Initialize components for Routine "scale_setup"
   scale_setupClock = new util.Clock();
   // Run 'Begin Experiment' code from scale_code
+  psychoJS.window.mouseVisible = false;
+  document.body.style.cursor = "none";
+  
   oldt = 0;
   x_size = 8.56;
   y_size = 5.398;
@@ -276,10 +279,10 @@ async function experimentInit() {
   text_inst = new visual.TextStim({
     win: psychoJS.window,
     name: 'text_inst',
-    text: 'Experimental Instruction\n\nWelcome to our reproduction experiment. Please focus during the experiment.\n\nIn this experiment, you will see a Gabor patch appear on the screen. You need to remember the DURATION of the Gabor patch. \nAfter it disappears,  you are asked to press the DOWN ARROW key as long as what you perceived. The key press will show a Gabor patch again, helping you compare the last duration. \n\nPress SPACE to continue...\n',
+    text: 'Experimental Instructions\n\nWelcome to our reproduction experiment! Please stay focused throughout the experiment.\n\nThis experiment consists of three blocks, with 100 trials in each block. In each trial, you will first see a fixation cross (a white "+" in the center of the screen), followed by a Gabor patch. Your task is to remember the DURATION of the Gabor patch.\n\nAfter it disappears, a green dot will appear, cueing you to press the DOWN ARROW key for as long as you think the Gabor patch was shown. Your key press will trigger the Gabor patch to appear again, allowing you to compare durations.\nBefore the main experiment, there will be a practice session with 15 trials to help you get used to the task.\n\n\nIf you encounter any issues, please contact the experimenter.\n\n\nPress SPACE to continue...',
     font: 'Arial',
     units: 'norm', 
-    pos: [0, 0], draggable: false, height: 0.07,  wrapWidth: undefined, ori: 0.0,
+    pos: [0, 0], draggable: false, height: 0.06,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
     depth: 0.0 
@@ -288,16 +291,16 @@ async function experimentInit() {
   instr_key = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
   
   // Run 'Begin Experiment' code from code
-  //practice_count = 10
-  practice_count = 2 // piloting phase
+  practice_count = 15
+  //practice_count = 2 // piloting phase
+  n_trl = 100; // trials per block
+  //n_trl = 2; // piloting phase
   function generateSequence() {
       // Parameters
       const low = 600; // ms (minimum duration)
       const high = 1800; // ms (maximum duration)
       const step = 16.67; // ms (60Hz refresh rate)
-      //const n_trl = 100; // trials per block
-      const n_trl = 2; // piloting phase
-  
+      
       // ===== 1. Generate Random Walk (LOW stochasticity) =====
       let w = new Array(n_trl).fill(0);
       for (let i = 1; i < n_trl; i++) {
@@ -477,8 +480,6 @@ async function experimentInit() {
     color: new util.Color('white'),  opacity: undefined,
     depth: -1.0 
   });
-  
-  key_resp_2 = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
   
   // Initialize components for Routine "iti"
   itiClock = new util.Clock();
@@ -1214,20 +1215,20 @@ function blockRoutineBegin(snapshot) {
         Block_text = `Practice will start.\n\nPlease press SPACE to continue.`;
         continueRoutine = true;
     }
-    else if (trialIndex === 2) {
+    else if (trialIndex === practice_count) {
     //else if (trialIndex === 10) {
         Block_text = `Formal Experiment will start now. \n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
         skipRoutine = true
         continueRoutine = true;
     }
     
-    else if (trialIndex === 4) {
+    else if (trialIndex === practice_count + n_trl) {
     //else if (trialIndex === 110) {
         Block_text = `Block 1/3 complete.\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
         continueRoutine = true;
     
     }
-    else if (trialIndex === 6) {
+    else if (trialIndex === practice_count + n_trl * 2) {
     //else if (trialIndex === 210) {
         Block_text = `Block 2/3 complete.\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
         continueRoutine = true;
@@ -1726,7 +1727,8 @@ function ReproductionRoutineEnd(snapshot) {
     psychoJS.experiment.addData("stochasticity", stochasticity);
     if (stochasticity === 'practice') {
         error_ratio = Math.abs((repDuration / duration) - 1);
-        skipRoutine = (trlno > 10) || (error_ratio <= 0.4);
+        //skipRoutine = (trlno > 10) || (error_ratio <= 0.4);
+        skipRoutine = (trlno > practice_count)
         }
     
     // the Routine "Reproduction" was not non-slip safe, so reset the non-slip timer
@@ -1743,7 +1745,6 @@ function ReproductionRoutineEnd(snapshot) {
 
 var feedbackMaxDurationReached;
 var fb_text;
-var _key_resp_2_allKeys;
 var maxDurationReached;
 var feedbackMaxDuration;
 var feedbackComponents;
@@ -1755,32 +1756,41 @@ function feedbackRoutineBegin(snapshot) {
     t = 0;
     frameN = -1;
     continueRoutine = true; // until we're told otherwise
-    feedbackClock.reset();
-    routineTimer.reset();
+    feedbackClock.reset(routineTimer.getTime());
+    routineTimer.add(1.000000);
     feedbackMaxDurationReached = false;
     // update component parameters for each repeat
     // Run 'Begin Routine' code from feedback_code
     showFeedback = false;  // default: don't show
     
     if (stochasticity === 'practice') {
-            error_ratio = Math.abs((repDuration / duration) - 1);
-        
-            if (error_ratio > 0.4) {
-                fb_text = `Your key pressed duration deviated too far!\n\n\npress SPACE to continue`;
-                showFeedback = true;
-            } else {
-                fb_text = "";
+        let error_long = repDuration > (0.25 * duration + duration)
+        let error_short = repDuration < (duration - 0.25 * duration)
+        let error_great = !error_long && !error_short
+        console.log(error_great);
+        if (error_long) {
+            //fb_text = `Your key press duration was too long!\n\n\npress SPACE to continue`;
+            fb_text = "Your key press duration was too long!";
+            showFeedback = true;
+            } 
+        else if (error_short){
+            //fb_text = `Your key press duration was too short!\n\n\npress SPACE to continue`;
+            fb_text = "Your key press duration was too short!";
+            showFeedback = true;
             }
-        } else {
-            fb_text = "";  // formal trials shouldn't show feedback
+        else if (error_great) {
+            //fb_text = `Your key press duration was accurate, great!\n\n\npress SPACE to continue`;
+            fb_text = "Your key press duration was accurate, great!";
+            console.log("here");
+            showFeedback = true;
+            } else {
+            fb_text = "";
+            }
         }
     
     
     
     feedback_text.setText(fb_text);
-    key_resp_2.keys = undefined;
-    key_resp_2.rt = undefined;
-    _key_resp_2_allKeys = [];
     // skip this Routine if its 'Skip if' condition is True
     continueRoutine = continueRoutine && !(skipRoutine);
     maxDurationReached = false
@@ -1788,7 +1798,6 @@ function feedbackRoutineBegin(snapshot) {
     // keep track of which components have finished
     feedbackComponents = [];
     feedbackComponents.push(feedback_text);
-    feedbackComponents.push(key_resp_2);
     
     for (const thisComponent of feedbackComponents)
       if ('status' in thisComponent)
@@ -1815,29 +1824,9 @@ function feedbackRoutineEachFrame() {
       feedback_text.setAutoDraw(true);
     }
     
-    
-    // *key_resp_2* updates
-    if (t >= 0.0 && key_resp_2.status === PsychoJS.Status.NOT_STARTED) {
-      // keep track of start time/frame for later
-      key_resp_2.tStart = t;  // (not accounting for frame time here)
-      key_resp_2.frameNStart = frameN;  // exact frame index
-      
-      // keyboard checking is just starting
-      psychoJS.window.callOnFlip(function() { key_resp_2.clock.reset(); });  // t=0 on next screen flip
-      psychoJS.window.callOnFlip(function() { key_resp_2.start(); }); // start on screen flip
-      psychoJS.window.callOnFlip(function() { key_resp_2.clearEvents(); });
-    }
-    
-    if (key_resp_2.status === PsychoJS.Status.STARTED) {
-      let theseKeys = key_resp_2.getKeys({keyList: ['space'], waitRelease: false});
-      _key_resp_2_allKeys = _key_resp_2_allKeys.concat(theseKeys);
-      if (_key_resp_2_allKeys.length > 0) {
-        key_resp_2.keys = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].name;  // just the last key pressed
-        key_resp_2.rt = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].rt;
-        key_resp_2.duration = _key_resp_2_allKeys[_key_resp_2_allKeys.length - 1].duration;
-        // a response ends the routine
-        continueRoutine = false;
-      }
+    frameRemains = 0.0 + 1 - psychoJS.window.monitorFramePeriod * 0.75;// most of one frame period left
+    if (feedback_text.status === PsychoJS.Status.STARTED && t >= frameRemains) {
+      feedback_text.setAutoDraw(false);
     }
     
     // check for quit (typically the Esc key)
@@ -1858,7 +1847,7 @@ function feedbackRoutineEachFrame() {
       }
     
     // refresh the screen if continuing
-    if (continueRoutine) {
+    if (continueRoutine && routineTimer.getTime() > 0) {
       return Scheduler.Event.FLIP_REPEAT;
     } else {
       return Scheduler.Event.NEXT;
@@ -1875,21 +1864,11 @@ function feedbackRoutineEnd(snapshot) {
         thisComponent.setAutoDraw(false);
       }
     }
-    // update the trial handler
-    if (currentLoop instanceof MultiStairHandler) {
-      currentLoop.addResponse(key_resp_2.corr, level);
+    if (feedbackMaxDurationReached) {
+        feedbackClock.add(feedbackMaxDuration);
+    } else {
+        feedbackClock.add(1.000000);
     }
-    psychoJS.experiment.addData('key_resp_2.keys', key_resp_2.keys);
-    if (typeof key_resp_2.keys !== 'undefined') {  // we had a response
-        psychoJS.experiment.addData('key_resp_2.rt', key_resp_2.rt);
-        psychoJS.experiment.addData('key_resp_2.duration', key_resp_2.duration);
-        routineTimer.reset();
-        }
-    
-    key_resp_2.stop();
-    // the Routine "feedback" was not non-slip safe, so reset the non-slip timer
-    routineTimer.reset();
-    
     // Routines running outside a loop should always advance the datafile row
     if (currentLoop === psychoJS.experiment) {
       psychoJS.experiment.nextEntry(snapshot);
@@ -1911,7 +1890,7 @@ function itiRoutineBegin(snapshot) {
     frameN = -1;
     continueRoutine = true; // until we're told otherwise
     itiClock.reset(routineTimer.getTime());
-    routineTimer.add(0.700000);
+    routineTimer.add(0.300000);
     itiMaxDurationReached = false;
     // update component parameters for each repeat
     itiMaxDuration = null
@@ -1944,7 +1923,7 @@ function itiRoutineEachFrame() {
       iti_blank.setAutoDraw(true);
     }
     
-    frameRemains = 0.0 + 0.7 - psychoJS.window.monitorFramePeriod * 0.75;// most of one frame period left
+    frameRemains = 0.0 + 0.3 - psychoJS.window.monitorFramePeriod * 0.75;// most of one frame period left
     if (iti_blank.status === PsychoJS.Status.STARTED && t >= frameRemains) {
       iti_blank.setAutoDraw(false);
     }
@@ -1987,7 +1966,7 @@ function itiRoutineEnd(snapshot) {
     if (itiMaxDurationReached) {
         itiClock.add(itiMaxDuration);
     } else {
-        itiClock.add(0.700000);
+        itiClock.add(0.300000);
     }
     // Routines running outside a loop should always advance the datafile row
     if (currentLoop === psychoJS.experiment) {
@@ -2078,6 +2057,8 @@ function exitRoutineBegin(snapshot) {
         quitPsychoJS();
     });
     
+    psychoJS.window.mouseVisible = true;
+    document.body.style.cursor = "default";
     exitMaxDuration = null
     // keep track of which components have finished
     exitComponents = [];
