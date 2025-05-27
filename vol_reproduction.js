@@ -1,4 +1,4 @@
-/************************* 
+﻿/************************* 
  * Vol_Reproduction *
  *************************/
 
@@ -21,6 +21,7 @@ let expInfo = {
 };
 
 // Start code blocks for 'Before Experiment'
+help_text = "";
 // Run 'Before Experiment' code from feedback_code
 fb_text = "";
 
@@ -89,6 +90,7 @@ psychoJS.start({
   resources: [
     // resources:
     {'name': 'bank-1300155_640.png', 'path': 'bank-1300155_640.png'},
+    {'name': 'instruction.png', 'path': 'instruction.png'},
   ]
 });
 
@@ -149,6 +151,7 @@ var instr_key;
 var practice_count;
 var n_trl;
 var subCond;
+var instruction_image;
 var blockClock;
 var Block_text;
 var showBlockText;
@@ -161,6 +164,7 @@ var cue_to_reproduceClock;
 var rep_cue;
 var ReproductionClock;
 var gabor;
+var text;
 var feedbackClock;
 var showFeedback;
 var feedback_text;
@@ -178,7 +182,7 @@ async function experimentInit() {
   document.body.style.cursor = "none";
   
   oldt = 0;
-  x_size = 8.56;
+  x_size = 6.56;
   y_size = 5.398;
   screen_height = 0;
   if ((psychoJS.window.units === "norm")) {
@@ -279,10 +283,10 @@ async function experimentInit() {
   text_inst = new visual.TextStim({
     win: psychoJS.window,
     name: 'text_inst',
-    text: 'Experimental Instructions\n\nWelcome to our reproduction experiment! Please stay focused throughout the experiment.\n\nThis experiment consists of three blocks, with 100 trials in each block. In each trial, you will first see a fixation cross (a white "+" in the center of the screen), followed by a Gabor patch. Your task is to remember the DURATION of the Gabor patch.\n\nAfter it disappears, a green dot will appear, cueing you to press the DOWN ARROW key for as long as you think the Gabor patch was shown. Your key press will trigger the Gabor patch to appear again, allowing you to compare durations.\nBefore the main experiment, there will be a practice session with 15 trials to help you get used to the task.\n\n\nIf you encounter any issues, please contact the experimenter.\n\n\nPress SPACE to continue...',
+    text: 'Experimental Instructions\n\nWelcome to our reproduction experiment! Please stay focused throughout the experiment.\n\nThis experiment consists of three blocks, with 100 trials in each block. In each trial, you will first see a fixation cross (a white "+" in the center of the screen), followed by a Gabor patch. Your task is to remember the DURATION of the Gabor patch.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAfter it disappears, a green dot will appear, cueing you to press the DOWN ARROW key for as long as you think the Gabor patch was shown. Your key press will trigger the Gabor patch to appear again, allowing you to compare durations.\nBefore the main experiment, there will be a practice session with 15 trials to help you get used to the task.\nIf you encounter any issues, please contact the experimenter.\n\nPress SPACE to continue...',
     font: 'Arial',
     units: 'norm', 
-    pos: [0, 0], draggable: false, height: 0.06,  wrapWidth: undefined, ori: 0.0,
+    pos: [0, 0], draggable: false, height: 0.05,  wrapWidth: undefined, ori: 0.0,
     languageStyle: 'LTR',
     color: new util.Color('white'),  opacity: undefined,
     depth: 0.0 
@@ -375,6 +379,19 @@ async function experimentInit() {
   subCond = generateSequence();
   console.log(subCond)
   console.log(subCond.length);
+  instruction_image = new visual.ImageStim({
+    win : psychoJS.window,
+    name : 'instruction_image', units : 'pix', 
+    image : 'instruction.png', mask : undefined,
+    anchor : 'center',
+    ori : 0.0, 
+    pos : [0, (- 0.6)], 
+    draggable: false,
+    size : [(17 * x_scale), (7 * y_scale)],
+    color : new util.Color([1,1,1]), opacity : undefined,
+    flipHoriz : false, flipVert : false,
+    texRes : 128.0, interpolate : true, depth : -3.0 
+  });
   // Initialize components for Routine "block"
   blockClock = new util.Clock();
   // Run 'Begin Experiment' code from code_2
@@ -410,7 +427,7 @@ async function experimentInit() {
     size : [(0.005 * x_scale), (0.014 * y_scale)],
     color : new util.Color([1,1,1]), opacity : undefined,
     contrast : 0.4, blendmode : 'avg',
-    texRes : 128.0, interpolate : true, depth : 0.0 
+    texRes : 128.0, interpolate : true, depth : -1.0 
   });
   fixation = new visual.ShapeStim ({
     win: psychoJS.window, name: 'fixation', units : 'height', 
@@ -448,6 +465,10 @@ async function experimentInit() {
   
   // Initialize components for Routine "Reproduction"
   ReproductionClock = new util.Clock();
+  // Run 'Begin Experiment' code from code_reproduction
+  // kb = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
+  
+  
   gabor = new visual.GratingStim({
     win : psychoJS.window,
     name : 'gabor', units : 'norm', 
@@ -460,11 +481,19 @@ async function experimentInit() {
     size : [(0.005 * x_scale), (0.014 * y_scale)],
     color : new util.Color([1,1,1]), opacity : undefined,
     contrast : 0.4, blendmode : 'avg',
-    texRes : 128.0, interpolate : true, depth : 0.0 
+    texRes : 128.0, interpolate : true, depth : -1.0 
   });
-  // Run 'Begin Experiment' code from code_reproduction
-  // kb = new core.Keyboard({psychoJS: psychoJS, clock: new util.Clock(), waitForStart: true});
-  
+  text = new visual.TextStim({
+    win: psychoJS.window,
+    name: 'text',
+    text: '',
+    font: 'Arial',
+    units: 'norm', 
+    pos: [0, (- 0.6)], draggable: false, height: 0.05,  wrapWidth: undefined, ori: 0.0,
+    languageStyle: 'LTR',
+    color: new util.Color('white'),  opacity: undefined,
+    depth: -2.0 
+  });
   
   // Initialize components for Routine "feedback"
   feedbackClock = new util.Clock();
@@ -936,7 +965,7 @@ function rectangle_keysRoutineBegin(snapshot) {
     routineTimer.reset();
     rectangle_keysMaxDurationReached = false;
     // update component parameters for each repeat
-    polygon_keys.setSize([(10 * x_scale), (10 * y_scale)]);
+    polygon_keys.setSize([(8 * x_scale), (10 * y_scale)]);
     key_resp_keys.keys = undefined;
     key_resp_keys.rt = undefined;
     _key_resp_keys_allKeys = [];
@@ -1090,6 +1119,7 @@ function InstructionRoutineBegin(snapshot) {
     InstructionComponents = [];
     InstructionComponents.push(text_inst);
     InstructionComponents.push(instr_key);
+    InstructionComponents.push(instruction_image);
     
     for (const thisComponent of InstructionComponents)
       if ('status' in thisComponent)
@@ -1139,6 +1169,16 @@ function InstructionRoutineEachFrame() {
         // a response ends the routine
         continueRoutine = false;
       }
+    }
+    
+    
+    // *instruction_image* updates
+    if (t >= 0.0 && instruction_image.status === PsychoJS.Status.NOT_STARTED) {
+      // keep track of start time/frame for later
+      instruction_image.tStart = t;  // (not accounting for frame time here)
+      instruction_image.frameNStart = frameN;  // exact frame index
+      
+      instruction_image.setAutoDraw(true);
     }
     
     // check for quit (typically the Esc key)
@@ -1209,28 +1249,28 @@ function blockRoutineBegin(snapshot) {
     continueRoutine = false;
     console.log(stochasticity);
     let trialIndex = trials.thisTrialN;  // 0-based trial number
-    console.log(trialIndex);
+    //console.log(trialIndex);
     
     if (trialIndex === 0) {
-        Block_text = `Practice will start.\n\nPlease press SPACE to continue.`;
+        Block_text = `Practice will start.\n\n Please do not forget pay attention to the DURATION of the Gabor patch that will be shown after the white cross.\n\nPress SPACE to continue.`;
         continueRoutine = true;
     }
     else if (trialIndex === practice_count) {
     //else if (trialIndex === 10) {
-        Block_text = `Formal Experiment will start now. \n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
+        Block_text = `Formal Experiment will start now.\n\nThere will be no instructions during the formal experiment.\n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
         skipRoutine = true
         continueRoutine = true;
     }
     
     else if (trialIndex === practice_count + n_trl) {
     //else if (trialIndex === 110) {
-        Block_text = `Block 1/3 complete.\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
+        Block_text = `Block 1/3 complete.\n\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
         continueRoutine = true;
     
     }
     else if (trialIndex === practice_count + n_trl * 2) {
     //else if (trialIndex === 210) {
-        Block_text = `Block 2/3 complete.\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
+        Block_text = `Block 2/3 complete.\n\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
         continueRoutine = true;
     }
     
@@ -1368,6 +1408,7 @@ function EncodingRoutineBegin(snapshot) {
     // Run 'Begin Routine' code from code_encoding
     orientation = util.randint(1, 180);
     
+    stimulus_grating.setOri(orientation);
     EncodingMaxDuration = null
     // keep track of which components have finished
     EncodingComponents = [];
@@ -1390,10 +1431,6 @@ function EncodingRoutineEachFrame() {
     t = EncodingClock.getTime();
     frameN = frameN + 1;// number of completed frames (so 0 is the first frame)
     // update/draw components on each frame
-    
-    if (stimulus_grating.status === PsychoJS.Status.STARTED){ // only update if being drawn
-      stimulus_grating.setOri(orientation, false);
-    }
     
     // *stimulus_grating* updates
     if (t >= 0.5 && stimulus_grating.status === PsychoJS.Status.NOT_STARTED) {
@@ -1577,6 +1614,7 @@ var repDuration;
 var keyOnset;
 var keyOffset;
 var kb;
+var help_text;
 var ReproductionMaxDuration;
 var ReproductionComponents;
 function ReproductionRoutineBegin(snapshot) {
@@ -1608,11 +1646,19 @@ function ReproductionRoutineBegin(snapshot) {
     kb = new core.Keyboard({ psychoJS: psychoJS, clock: new util.Clock(), waitForStart: false });
     kb.start();
     
+    if (stochasticity === 'practice') {
+        help_text = "Now, press the down arrow key as long as the duration of the Gabor patch that was previously shown.";
+    } else {
+        help_text = '';
+        }
     
+    gabor.setOri(orientation);
+    text.setText(help_text);
     ReproductionMaxDuration = null
     // keep track of which components have finished
     ReproductionComponents = [];
     ReproductionComponents.push(gabor);
+    ReproductionComponents.push(text);
     
     for (const thisComponent of ReproductionComponents)
       if ('status' in thisComponent)
@@ -1629,10 +1675,45 @@ function ReproductionRoutineEachFrame() {
     t = ReproductionClock.getTime();
     frameN = frameN + 1;// number of completed frames (so 0 is the first frame)
     // update/draw components on each frame
+    // Check for key events
+    let keyEvents = kb.getEvents();
+    let keyName, status;
+    console.log("trial:", trials.thisTrialN);
+    console.log("orientation:", orientation);
     
-    if (gabor.status === PsychoJS.Status.STARTED){ // only update if being drawn
-      gabor.setOri(orientation, false);
+    for (let i = 0; i < keyEvents.length; i++) {
+        let event = keyEvents[i];
+        keyName = event.pigletKey;  // e.g., 'ArrowDown'
+        status = event.status;      // Symbol.for('KEY_DOWN') or Symbol.for('KEY_UP')
+        //console.log(keyName);
+    
+        if (keyName === 'down') {
+            if (status === Symbol.for('KEY_DOWN')) {
+                // Only store the first press time
+                if (!keyPressed) {
+                    keyPressed = true;
+                    keyOnset = globalClock.getTime();
+                    gabor.setAutoDraw(true);
+                    //console.log("Key DOWN at:", keyOnset);
+                }
+            } 
+            else if (status === Symbol.for('KEY_UP') && keyPressed) {
+                keyOffset = globalClock.getTime();
+                repDuration = keyOffset - keyOnset;
+                gabor.setAutoDraw(false);
+    
+                //console.log("Key UP at:", keyOffset);
+                //console.log("Duration:", repDuration);
+                //console.log(repDuration, "=", keyOffset, "-", keyOnset);
+    
+                // Save data and end routine
+                psychoJS.experiment.addData('press_time', keyOnset);
+                psychoJS.experiment.addData('duration', repDuration);
+                continueRoutine = false;
+            }
+        }
     }
+    
     
     // *gabor* updates
     if ((0) && gabor.status === PsychoJS.Status.NOT_STARTED) {
@@ -1643,41 +1724,14 @@ function ReproductionRoutineEachFrame() {
       gabor.setAutoDraw(true);
     }
     
-    // Check for key events
-    let keyEvents = kb.getEvents();
-    let keyName, status;
     
-    for (let i = 0; i < keyEvents.length; i++) {
-        let event = keyEvents[i];
-        keyName = event.pigletKey;  // e.g., 'ArrowDown'
-        status = event.status;      // Symbol.for('KEY_DOWN') or Symbol.for('KEY_UP')
-        console.log(keyName);
-    
-        if (keyName === 'down') {
-            if (status === Symbol.for('KEY_DOWN')) {
-                // Only store the first press time
-                if (!keyPressed) {
-                    keyPressed = true;
-                    keyOnset = globalClock.getTime();
-                    gabor.setAutoDraw(true);
-                    console.log("Key DOWN at:", keyOnset);
-                }
-            } 
-            else if (status === Symbol.for('KEY_UP') && keyPressed) {
-                keyOffset = globalClock.getTime();
-                repDuration = keyOffset - keyOnset;
-                gabor.setAutoDraw(false);
-    
-                console.log("Key UP at:", keyOffset);
-                console.log("Duration:", repDuration);
-                //console.log(repDuration, "=", keyOffset, "-", keyOnset);
-    
-                // Save data and end routine
-                psychoJS.experiment.addData('press_time', keyOnset);
-                psychoJS.experiment.addData('duration', repDuration);
-                continueRoutine = false;
-            }
-        }
+    // *text* updates
+    if (t >= 0.0 && text.status === PsychoJS.Status.NOT_STARTED) {
+      // keep track of start time/frame for later
+      text.tStart = t;  // (not accounting for frame time here)
+      text.frameNStart = frameN;  // exact frame index
+      
+      text.setAutoDraw(true);
     }
     
     // check for quit (typically the Esc key)
