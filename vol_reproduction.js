@@ -297,75 +297,72 @@ async function experimentInit() {
   // Run 'Begin Experiment' code from code
   practice_count = 15
   //practice_count = 2 // piloting phase
-  n_trl = 100; // trials per block
+  n_trl = 50; // trials per block
   //n_trl = 2; // piloting phase
   function generateSequence() {
-      // Parameters
-      const low = 600; // ms (minimum duration)
-      const high = 1800; // ms (maximum duration)
-      const step = 16.67; // ms (60Hz refresh rate)
-      
-      // ===== 1. Generate Random Walk (LOW stochasticity) =====
-      let w = new Array(n_trl).fill(0);
-      for (let i = 1; i < n_trl; i++) {
-          // Smooth random walk: each step depends on the previous value
-          w[i] = w[i-1] + (Math.random() * 2 - 1); // Small random step (-1 to +1)
+      const low = 600; // ms
+      const high = 1800; // ms
+      const step = 16.67; // ms
+  
+      function generateRandomWalk(n) {
+          let w = new Array(n).fill(0);
+          for (let i = 1; i < n; i++) {
+              w[i] = w[i - 1] + (Math.random() * 2 - 1);
+          }
+          const mean = w.reduce((a, b) => a + b, 0) / w.length;
+          w = w.map(x => x - mean);
+          const std = Math.sqrt(w.reduce((a, b) => a + b * b, 0) / w.length);
+          w = w.map(x => x / std);
+          const min = Math.min(...w);
+          const max = Math.max(...w);
+          w = w.map(x => 
+              Math.round(((x - min) / (max - min) * (high - low) + low) / step) * step
+          );
+          return w.map(x => parseFloat((x / 1000).toFixed(3)));
       }
   
-      // Normalize to mean=0, std=1
-      const mean = w.reduce((a, b) => a + b, 0) / w.length;
-      w = w.map(x => x - mean);
-      const std = Math.sqrt(w.reduce((a, b) => a + b*b, 0) / w.length);
-      w = w.map(x => x / std);
-  
-      // Scale to [low, high] range and round to nearest step (for 60Hz)
-      const min = Math.min(...w);
-      const max = Math.max(...w);
-      w = w.map(x => 
-          Math.round(((x - min) / (max - min) * (high - low) + low) / step) * step
-      );
-  
-      // Low stochasticity block (w1 = random walk, in seconds)
-      const w1 = w.map(x => parseFloat((x / 1000).toFixed(3))); // Round to 3 decimals
-  
-      // High stochasticity block (w2 = DEEPLY SHUFFLED w1)
-      const w2 = [...w1];
-      for (let i = w2.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1)); // Fisher-Yates shuffle
-          [w2[i], w2[j]] = [w2[j], w2[i]];
+      function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [array[i], array[j]] = [array[j], array[i]];
+          }
       }
   
-      // ===== 2. Assign Blocks (L-H-L or H-L-H) =====
-      let durations, labels;
-      if (Math.random() < 0.5) {
-          // Low-High-Low condition
-          durations = [...w1, ...w2, ...w1];
-          labels = [
-              ...Array(n_trl).fill('low'),
-              ...Array(n_trl).fill('high'),
-              ...Array(n_trl).fill('low')
-          ];
-      } else {
-          // High-Low-High condition
-          durations = [...w2, ...w1, ...w2];
-          labels = [
-              ...Array(n_trl).fill('high'),
-              ...Array(n_trl).fill('low'),
-              ...Array(n_trl).fill('high')
-          ];
-      }
+      // Generate base low- and high-stochasticity trial sets
+      const lowBlock = generateRandomWalk(n_trl);
+      const highBlock = [...lowBlock];
+      shuffleArray(highBlock); // Deep shuffle for high volatility
   
-      // ===== 3. Add Practice Trials =====
+      // Create 3 low and 3 high blocks
+      const blocks = [
+          { type: 'low', data: [...lowBlock] },
+          { type: 'low', data: [...lowBlock] },
+          { type: 'low', data: [...lowBlock] },
+          { type: 'high', data: [...highBlock] },
+          { type: 'high', data: [...highBlock] },
+          { type: 'high', data: [...highBlock] },
+      ];
+  
+      // Shuffle block order
+      shuffleArray(blocks);
+  
+      // Assemble main trials
+      let durations = [];
+      let labels = [];
+      blocks.forEach(block => {
+          durations.push(...block.data);
+          labels.push(...Array(n_trl).fill(block.type));
+      });
+  
+      // Practice trials
       const practice_options = [1.1, 1.2, 1.3];
       const practice_durations = Array(practice_count).fill(0)
-          .map(() => parseFloat((practice_options[Math.floor(Math.random() * practice_options.length)]).toFixed(3))); // Round to 3 decimals
+          .map(() => parseFloat((practice_options[Math.floor(Math.random() * practice_options.length)]).toFixed(3)));
       const practice_labels = Array(practice_count).fill('practice');
   
-      // Combine practice + main blocks
       durations = [...practice_durations, ...durations];
       labels = [...practice_labels, ...labels];
   
-      // ===== 4. Create Trial List =====
       const trials = durations.map((duration, i) => ({
           trlno: i + 1,
           duration: duration,
@@ -373,7 +370,6 @@ async function experimentInit() {
       }));
   
       console.log("Total trials:", trials.length);
-  
       return trials;
   }
   subCond = generateSequence();
@@ -1257,21 +1253,17 @@ function blockRoutineBegin(snapshot) {
     }
     else if (trialIndex === practice_count) {
     //else if (trialIndex === 10) {
-        Block_text = `Formal Experiment will start now.\n\nThere will be no instructions during the formal experiment.\n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
+        Block_text = `Formal Experiment will start now.\n\nThere will be no accuracy feedback during the formal experiment.\n\nBlock 1 of 3.\n\nPlease press SPACE to continue.`;
         skipRoutine = true
         continueRoutine = true;
     }
     
-    else if (trialIndex === practice_count + n_trl) {
-    //else if (trialIndex === 110) {
-        Block_text = `Block 1/3 complete.\n\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
+    else if ((trialIndex - practice_count) % n_trl === 0 && trialIndex > practice_count) {
+        const blockNumber = ((trialIndex - practice_count) / n_trl);
+        if (blockNumber < 6) {
+        Block_text = `Block ${blockNumber}/6 complete.\n\nYou did a great job, please take a rest.\n\n\nPress SPACE to continue.`;
         continueRoutine = true;
-    
-    }
-    else if (trialIndex === practice_count + n_trl * 2) {
-    //else if (trialIndex === 210) {
-        Block_text = `Block 2/3 complete.\n\nYou did a great job, please take a rest.\n\nPress SPACE to continue.`;
-        continueRoutine = true;
+        }
     }
     
     if (continueRoutine) {
