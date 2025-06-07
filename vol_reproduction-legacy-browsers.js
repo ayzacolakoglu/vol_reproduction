@@ -8,7 +8,7 @@ let expName = 'vol_reproduction';  // from the Builder filename that created thi
 let expInfo = {
     'participant': `${util.pad(Number.parseFloat(util.randint(0, 999999)).toFixed(0), 4)}`,
     'prolificID': '',
-    'gender (M/F)': '',
+    'gender (M/F/D)': '',
     'age': '',
 };
 
@@ -275,7 +275,7 @@ async function experimentInit() {
   text_inst = new visual.TextStim({
     win: psychoJS.window,
     name: 'text_inst',
-    text: 'Experimental Instructions\n\nWelcome to our reproduction experiment! Please stay focused throughout the experiment.\n\nThis experiment consists of three blocks, with 100 trials in each block. In each trial, you will first see a fixation cross (a white "+" in the center of the screen), followed by a Gabor patch. Your task is to remember the DURATION of the Gabor patch.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAfter it disappears, a green dot will appear, cueing you to press the DOWN ARROW key for as long as you think the Gabor patch was shown. Your key press will trigger the Gabor patch to appear again, allowing you to compare durations.\nBefore the main experiment, there will be a practice session with 15 trials to help you get used to the task.\nIf you encounter any issues, please contact the experimenter.\n\nPress SPACE to continue...',
+    text: 'Experimental Instructions\n\nWelcome to our reproduction experiment! Please stay focused throughout the experiment.\n\nThis experiment consists of 6 blocks, with 50 trials in each block. In each trial, you will first see a fixation cross (a white "+" in the center of the screen), followed by a Gabor patch. Your task is to remember the DURATION of the Gabor patch.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAfter it disappears, a green dot will appear, cueing you to press the DOWN ARROW key for as long as you think the Gabor patch was shown. Your key press will trigger the Gabor patch to appear again, allowing you to compare durations.\nBefore the main experiment, there will be a practice session with 15 trials to help you get used to the task.\nIf you encounter any issues, please contact the experimenter.\n\nPress SPACE to continue...',
     font: 'Arial',
     units: 'norm', 
     pos: [0, 0], draggable: false, height: 0.05,  wrapWidth: undefined, ori: 0.0,
@@ -320,23 +320,29 @@ async function experimentInit() {
           }
       }
   
-      // Generate base low- and high-stochasticity trial sets
-      const lowBlock = generateRandomWalk(n_trl);
-      const highBlock = [...lowBlock];
-      shuffleArray(highBlock); // Deep shuffle for high volatility
+      // Generate 3 unique low blocks and corresponding high blocks
+      const blocks = [];
+      for (let i = 0; i < 3; i++) {
+          const newLowBlock = generateRandomWalk(n_trl);
+          const newHighBlock = [...newLowBlock];
+          shuffleArray(newHighBlock);
   
-      // Create 3 low and 3 high blocks
-      const blocks = [
-          { type: 'low', data: [...lowBlock] },
-          { type: 'low', data: [...lowBlock] },
-          { type: 'low', data: [...lowBlock] },
-          { type: 'high', data: [...highBlock] },
-          { type: 'high', data: [...highBlock] },
-          { type: 'high', data: [...highBlock] },
-      ];
+          blocks.push({ type: 'low', data: newLowBlock });
+          blocks.push({ type: 'high', data: newHighBlock });
+      }
   
-      // Shuffle block order
-      shuffleArray(blocks);
+      // Ensure all 4 transitions are represented
+      function checkTransitions(blocks) {
+          const transitions = new Set();
+          for (let i = 1; i < blocks.length; i++) {
+              transitions.add(blocks[i - 1].type + '-' + blocks[i].type);
+          }
+          return transitions.size === 4;
+      }
+  
+      do {
+          shuffleArray(blocks);
+      } while (!checkTransitions(blocks));
   
       // Assemble main trials
       let durations = [];
